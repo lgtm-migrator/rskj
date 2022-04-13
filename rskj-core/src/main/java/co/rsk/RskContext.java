@@ -78,6 +78,8 @@ import co.rsk.rpc.modules.trace.TraceModuleImpl;
 import co.rsk.rpc.modules.txpool.TxPoolModule;
 import co.rsk.rpc.modules.txpool.TxPoolModuleImpl;
 import co.rsk.rpc.netty.*;
+import co.rsk.rpc.netty.rest.RestServer;
+import co.rsk.rpc.netty.rest.dto.RestModuleConfigDTO;
 import co.rsk.scoring.PeerScoring;
 import co.rsk.scoring.PeerScoringManager;
 import co.rsk.scoring.PeerScoringReporterService;
@@ -253,6 +255,7 @@ public class RskContext implements NodeContext, NodeBootstrapper {
     private PeerScoringReporterService peerScoringReporterService;
     private TxQuotaChecker txQuotaChecker;
     private GasPriceTracker gasPriceTracker;
+    private RestServer restServer;
 
     private volatile boolean closed;
 
@@ -1006,6 +1009,10 @@ public class RskContext implements NodeContext, NodeBootstrapper {
             internalServices.add(getPeerScoringReporterService());
         }
 
+        if (getRskSystemProperties().isRestServerEnabled()) {
+            internalServices.add(getRestServer());
+        }
+
         internalServices.add(new BlockChainFlusher(
                 getRskSystemProperties().flushNumberOfBlocks(),
                 getCompositeEthereumListener(),
@@ -1141,6 +1148,16 @@ public class RskContext implements NodeContext, NodeBootstrapper {
         }
 
         return peerScoringReporterService;
+    }
+
+    public synchronized RestServer getRestServer() {
+        checkIfNotClosed();
+
+        if (restServer == null) {
+            this.restServer = buildRestServer();
+        }
+
+        return restServer;
     }
 
     public boolean isClosed() {
@@ -1431,6 +1448,16 @@ public class RskContext implements NodeContext, NodeBootstrapper {
         KeyValueDataSource ds = KeyValueDataSource.makeDataSource(Paths.get(rskSystemProperties.databaseDir(), "wallet"), rskSystemProperties.databaseKind());
 
         return new Wallet(ds);
+    }
+
+    @Nullable
+    protected synchronized RestServer buildRestServer() {
+        RskSystemProperties config = getRskSystemProperties();
+        RestModuleConfigDTO restModuleConfigDTO = new RestModuleConfigDTO(
+                config.isHealthCheckModuleEnabled());
+        return new RestServer(config.getRestServerBindAddress(),
+                config.getRestServerPort(),
+                restModuleConfigDTO);
     }
 
     /***** Private Methods ********************************************************************************************/
