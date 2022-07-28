@@ -89,10 +89,9 @@ class ImportLightTest {
                         config.getActivationConfig(),
                         repositoryLocator,
                         transactionExecutorFactory,
-                        config.isRemascEnabled()),
-                stateRootHandler
-        );
-
+                        config.isRemascEnabled(),
+                false, false),
+        stateRootHandler);
         blockchain.setNoValidation(true);
 
         Repository track = repository.startTracking();

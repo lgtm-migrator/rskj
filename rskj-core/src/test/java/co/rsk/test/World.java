@@ -182,9 +182,9 @@ public class World {
                             new BlockFactory(config.getActivationConfig()),
                             programInvokeFactory,
                             new PrecompiledContracts(config, bridgeSupportFactory),
-                            blockTxSignatureCache
-                    ),
-                    config.isRemascEnabled());
+                            blockTxSignatureCache),
+                            config.isRemascEnabled(),
+                        false, false);
         }
 
         return this.blockExecutor;

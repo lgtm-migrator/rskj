@@ -1412,9 +1412,9 @@ public class BlockExecutorTest {
                         BLOCK_FACTORY,
                         new ProgramInvokeFactoryImpl(),
                         new PrecompiledContracts(cfg, bridgeSupportFactory),
-                        new BlockTxSignatureCache(new ReceivedTxSignatureCache())
-                ),
-                cfg.isRemascEnabled());
+                        new BlockTxSignatureCache(new ReceivedTxSignatureCache())),
+                        cfg.isRemascEnabled(),
+                false, false);
     }
 
     public static class TestObjects {

@@ -325,7 +325,8 @@ public class WorldDslProcessor {
                             null,
                             world.getBlockTxSignatureCache()
                     ),
-                    config.isRemascEnabled());
+                    config.isRemascEnabled(),
+                    false, false);
             executor.executeAndFill(block, parent.getHeader());
             world.saveBlock(name, block);
             parent = block;

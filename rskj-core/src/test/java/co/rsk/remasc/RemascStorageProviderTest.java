@@ -455,7 +455,8 @@ class RemascStorageProviderTest {
                         new PrecompiledContracts(config, bridgeSupportFactory),
                         new BlockTxSignatureCache(new ReceivedTxSignatureCache())
                 ),
-                config.isRemascEnabled());
+                config.isRemascEnabled(),
+                false, false);
 
         for (Block b : blocks) {
             blockExecutor.executeAndFillAll(b, blockchain.getBestBlock().getHeader());
