@@ -20,16 +20,10 @@
 package org.ethereum.datasource;
 
 import org.ethereum.db.ByteArrayWrapper;
-import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 
 public interface KeyValueDataSource extends DataSource {
 

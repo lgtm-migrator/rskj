@@ -12,8 +12,11 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class KeyValueDataSourceUtils {
-    static private String DB_KIND_PROPERTIES_FILE = "dbKind.properties";
-    static private String KEYVALUE_DATASOURCE_PROP_NAME = "keyvalue.datasource";
+
+    private static final String DB_KIND_PROPERTIES_FILE = "dbKind.properties";
+    private static final String KEYVALUE_DATASOURCE_PROP_NAME = "keyvalue.datasource";
+
+    private KeyValueDataSourceUtils() { /* hidden */ }
 
     @Nonnull
     static public KeyValueDataSource makeDataSource(@Nonnull Path datasourcePath, @Nonnull DbKind kind) {
