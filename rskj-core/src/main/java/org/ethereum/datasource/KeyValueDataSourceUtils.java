@@ -19,7 +19,7 @@ public class KeyValueDataSourceUtils {
     private KeyValueDataSourceUtils() { /* hidden */ }
 
     @Nonnull
-    static public KeyValueDataSource makeDataSource(@Nonnull Path datasourcePath, @Nonnull DbKind kind) {
+    public static KeyValueDataSource makeDataSource(@Nonnull Path datasourcePath, @Nonnull DbKind kind) {
         String name = datasourcePath.getFileName().toString();
         String databaseDir = datasourcePath.getParent().toString();
 
@@ -40,7 +40,7 @@ public class KeyValueDataSourceUtils {
         return ds;
     }
 
-    static public void mergeDataSources(@Nonnull Path destinationPath, @Nonnull List<Path> originPaths, @Nonnull DbKind kind) {
+    public static void mergeDataSources(@Nonnull Path destinationPath, @Nonnull List<Path> originPaths, @Nonnull DbKind kind) {
         Map<ByteArrayWrapper, byte[]> mergedStores = new HashMap<>();
         for (Path originPath : originPaths) {
             KeyValueDataSource singleOriginDataSource = makeDataSource(originPath, kind);
@@ -54,7 +54,7 @@ public class KeyValueDataSourceUtils {
         destinationDataSource.close();
     }
 
-    static public DbKind getDbKindValueFromDbKindFile(String databaseDir) {
+    public static DbKind getDbKindValueFromDbKindFile(String databaseDir) {
         try {
             File file = new File(databaseDir, DB_KIND_PROPERTIES_FILE);
             Properties props = new Properties();
@@ -73,7 +73,7 @@ public class KeyValueDataSourceUtils {
         }
     }
 
-    static public void generatedDbKindFile(DbKind dbKind, String databaseDir) {
+    public static void generatedDbKindFile(DbKind dbKind, String databaseDir) {
         try {
             File file = new File(databaseDir, DB_KIND_PROPERTIES_FILE);
             Properties props = new Properties();
@@ -89,7 +89,7 @@ public class KeyValueDataSourceUtils {
         }
     }
 
-    static public void validateDbKind(DbKind currentDbKind, String databaseDir, boolean databaseReset) {
+    public static void validateDbKind(DbKind currentDbKind, String databaseDir, boolean databaseReset) {
         File dir = new File(databaseDir);
         boolean databaseDirExists = dir.exists() && dir.isDirectory();
 
