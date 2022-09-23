@@ -18,6 +18,7 @@
 
 package org.ethereum.rpc;
 
+import co.rsk.Flusher;
 import co.rsk.config.RskSystemProperties;
 import co.rsk.config.TestSystemProperties;
 import co.rsk.core.*;
@@ -1160,6 +1161,20 @@ public class Web3ImplTest {
         Assert.assertNull(hexString);
     }
 
+    @Test
+    public void flush() {
+        Flusher flusher = mock(Flusher.class);
+
+        Web3Impl web3 = createWeb3(
+                Web3Mocks.getMockEthereum(), Web3Mocks.getMockBlockchain(), Web3Mocks.getMockRepositoryLocator(), Web3Mocks.getMockTransactionPool(),
+                Web3Mocks.getMockBlockStore(), null, null, null, flusher
+        );
+
+        web3.rsk_flush();
+
+        verify(flusher, times(1)).forceFlush();
+    }
+
     @Test(expected = org.ethereum.rpc.exception.RskJsonRpcRequestException.class)
     public void getBlockByNumberWhenNumberIsInvalidThrowsException() {
         World world = new World();
@@ -2166,7 +2181,7 @@ public class Web3ImplTest {
     private Web3Impl createWeb3() {
         return createWeb3(
                 Web3Mocks.getMockEthereum(), Web3Mocks.getMockBlockchain(), Web3Mocks.getMockRepositoryLocator(), Web3Mocks.getMockTransactionPool(),
-                Web3Mocks.getMockBlockStore(), null, null, null
+                Web3Mocks.getMockBlockStore(), null, null, null, Web3Mocks.getMockFlusher()
         );
     }
 
@@ -2405,7 +2420,7 @@ public class Web3ImplTest {
         RepositoryLocator repositoryLocator = world.getRepositoryLocator();
         return createWeb3(
                 eth, world.getBlockChain(), repositoryLocator, transactionPool, world.getBlockStore(),
-                null, new SimpleConfigCapabilities(), receiptStore
+                null, new SimpleConfigCapabilities(), receiptStore, Web3Mocks.getMockFlusher()
         );
     }
 
@@ -2427,7 +2442,7 @@ public class Web3ImplTest {
         return createWeb3(
                 Web3Mocks.getMockEthereum(), blockChain, repositoryLocator, transactionPool,
                 blockStore, blockProcessor,
-                new SimpleConfigCapabilities(), receiptStore
+                new SimpleConfigCapabilities(), receiptStore, Web3Mocks.getMockFlusher()
         );
     }
 
@@ -2439,7 +2454,8 @@ public class Web3ImplTest {
             BlockStore blockStore,
             BlockProcessor nodeBlockProcessor,
             ConfigCapabilities configCapabilities,
-            ReceiptStore receiptStore) {
+            ReceiptStore receiptStore,
+            Flusher flusher) {
         MiningMainchainView miningMainchainViewMock = mock(MiningMainchainView.class);
         ExecutionBlockRetriever executionBlockRetriever = mock(ExecutionBlockRetriever.class);
         wallet = WalletFactory.createWallet();
@@ -2462,7 +2478,7 @@ public class Web3ImplTest {
         );
         TxPoolModule txPoolModule = new TxPoolModuleImpl(transactionPool);
         DebugModule debugModule = new DebugModuleImpl(null, null, Web3Mocks.getMockMessageHandler(), null, null);
-        RskModule rskModule = new RskModuleImpl(blockchain, blockStore, receiptStore, retriever,null);
+        RskModule rskModule = new RskModuleImpl(blockchain, blockStore, receiptStore, retriever, flusher);
         MinerClient minerClient = new SimpleMinerClient();
         ChannelManager channelManager = new SimpleChannelManager();
         return new Web3RskImpl(
@@ -2523,7 +2539,7 @@ public class Web3ImplTest {
                 config.getGasEstimationCap());
         TxPoolModule txPoolModule = new TxPoolModuleImpl(transactionPool);
         DebugModule debugModule = new DebugModuleImpl(null, null, Web3Mocks.getMockMessageHandler(), null, null);
-        RskModule rskModule = new RskModuleImpl(blockchain, blockStore, receiptStore, retriever,null);
+        RskModule rskModule = new RskModuleImpl(blockchain, blockStore, receiptStore, retriever, mock(Flusher.class));
         MinerClient minerClient = new SimpleMinerClient();
         ChannelManager channelManager = new SimpleChannelManager();
         return new Web3RskImpl(
