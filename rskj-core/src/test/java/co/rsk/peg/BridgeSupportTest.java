@@ -1,3 +1,21 @@
+/*
+ * This file is part of RskJ
+ * Copyright (C) 2017 RSK Labs Ltd.
+ * (derived from ethereumJ library, Copyright (c) 2016 <ether.camp>)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 package co.rsk.peg;
 
 import co.rsk.bitcoinj.core.*;
@@ -36,9 +54,7 @@ import org.ethereum.config.Constants;
 import org.ethereum.config.blockchain.upgrades.ActivationConfig;
 import org.ethereum.config.blockchain.upgrades.ActivationConfigsForTest;
 import org.ethereum.config.blockchain.upgrades.ConsensusRule;
-import org.ethereum.core.Block;
-import org.ethereum.core.Repository;
-import org.ethereum.core.Transaction;
+import org.ethereum.core.*;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.crypto.HashUtil;
 import org.ethereum.util.ByteUtil;
@@ -91,10 +107,13 @@ class BridgeSupportTest extends BridgeSupportTestBase {
     protected ActivationConfig.ForBlock activationsBeforeForks;
     protected ActivationConfig.ForBlock activationsAfterForks;
 
+    protected SignatureCache signatureCache;
+
     @BeforeEach
     void setUpOnEachTest() {
         activationsBeforeForks = ActivationConfigsForTest.genesis().forBlock(0);
         activationsAfterForks = ActivationConfigsForTest.all().forBlock(0);
+        signatureCache = new BlockTxSignatureCache(new ReceivedTxSignatureCache());
         bridgeSupportBuilder = new BridgeSupportBuilder();
     }
 
@@ -116,9 +135,9 @@ class BridgeSupportTest extends BridgeSupportTestBase {
         AddressBasedAuthorizer authorizer = mock(AddressBasedAuthorizer.class);
 
         when(provider.getFeePerKbElection(any())).thenReturn(new ABICallElection(null));
-        when(tx.getSender()).thenReturn(new RskAddress(ByteUtil.leftPadBytes(new byte[]{0x43}, 20)));
+        when(tx.getSender(any(SignatureCache.class))).thenReturn(new RskAddress(ByteUtil.leftPadBytes(new byte[]{0x43}, 20)));
         when(constants.getFeePerKbChangeAuthorizer()).thenReturn(authorizer);
-        when(authorizer.isAuthorized(tx)).thenReturn(true);
+        when(authorizer.isAuthorized(eq(tx), any())).thenReturn(true);
 
         BridgeSupport bridgeSupport = bridgeSupportBuilder
             .withBridgeConstants(constants)
@@ -139,9 +158,9 @@ class BridgeSupportTest extends BridgeSupportTestBase {
         byte[] senderBytes = ByteUtil.leftPadBytes(new byte[]{0x43}, 20);
 
         when(provider.getFeePerKbElection(any())).thenReturn(new ABICallElection(authorizer));
-        when(tx.getSender()).thenReturn(new RskAddress(senderBytes));
+        when(tx.getSender(any(SignatureCache.class))).thenReturn(new RskAddress(senderBytes));
         when(constants.getFeePerKbChangeAuthorizer()).thenReturn(authorizer);
-        when(authorizer.isAuthorized(tx)).thenReturn(false);
+        when(authorizer.isAuthorized(eq(tx), any())).thenReturn(false);
 
         BridgeSupport bridgeSupport = bridgeSupportBuilder
             .withBridgeConstants(constants)
@@ -166,7 +185,7 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             .thenReturn(new RskAddress(senderBytes));
         when(constants.getFeePerKbChangeAuthorizer())
             .thenReturn(authorizer);
-        when(authorizer.isAuthorized(tx))
+        when(authorizer.isAuthorized(eq(tx), any()))
             .thenReturn(true);
         when(authorizer.isAuthorized(tx.getSender()))
             .thenReturn(true);
@@ -192,15 +211,17 @@ class BridgeSupportTest extends BridgeSupportTestBase {
         AddressBasedAuthorizer authorizer = mock(AddressBasedAuthorizer.class);
         byte[] senderBytes = ByteUtil.leftPadBytes(new byte[]{0x43}, 20);
 
+        RskAddress sender = new RskAddress(senderBytes);
+
         when(provider.getFeePerKbElection(any()))
             .thenReturn(new ABICallElection(authorizer));
-        when(tx.getSender())
-            .thenReturn(new RskAddress(senderBytes));
+        when(tx.getSender(any(SignatureCache.class)))
+            .thenReturn(sender);
         when(constants.getFeePerKbChangeAuthorizer())
             .thenReturn(authorizer);
-        when(authorizer.isAuthorized(tx))
+        when(authorizer.isAuthorized(eq(tx), any()))
             .thenReturn(true);
-        when(authorizer.isAuthorized(tx.getSender()))
+        when(authorizer.isAuthorized(sender))
             .thenReturn(true);
         when(authorizer.getRequiredAuthorizedKeys())
             .thenReturn(2);
@@ -226,15 +247,17 @@ class BridgeSupportTest extends BridgeSupportTestBase {
         AddressBasedAuthorizer authorizer = mock(AddressBasedAuthorizer.class);
         byte[] senderBytes = ByteUtil.leftPadBytes(new byte[]{0x43}, 20);
 
+        RskAddress sender = new RskAddress(senderBytes);
+
         when(provider.getFeePerKbElection(any()))
             .thenReturn(new ABICallElection(authorizer));
-        when(tx.getSender())
-            .thenReturn(new RskAddress(senderBytes));
+        when(tx.getSender(any(SignatureCache.class)))
+            .thenReturn(sender);
         when(constants.getFeePerKbChangeAuthorizer())
             .thenReturn(authorizer);
-        when(authorizer.isAuthorized(tx))
+        when(authorizer.isAuthorized(eq(tx), any()))
             .thenReturn(true);
-        when(authorizer.isAuthorized(tx.getSender()))
+        when(authorizer.isAuthorized(sender))
             .thenReturn(true);
         when(authorizer.getRequiredAuthorizedKeys())
             .thenReturn(2);
@@ -259,15 +282,17 @@ class BridgeSupportTest extends BridgeSupportTestBase {
         AddressBasedAuthorizer authorizer = mock(AddressBasedAuthorizer.class);
         byte[] senderBytes = ByteUtil.leftPadBytes(new byte[]{0x43}, 20);
 
+        RskAddress sender = new RskAddress(senderBytes);
+
         when(provider.getFeePerKbElection(any()))
             .thenReturn(new ABICallElection(authorizer));
-        when(tx.getSender())
-            .thenReturn(new RskAddress(senderBytes));
+        when(tx.getSender(any(SignatureCache.class)))
+            .thenReturn(sender);
         when(constants.getFeePerKbChangeAuthorizer())
             .thenReturn(authorizer);
-        when(authorizer.isAuthorized(tx))
+        when(authorizer.isAuthorized(eq(tx), any()))
             .thenReturn(true);
-        when(authorizer.isAuthorized(tx.getSender()))
+        when(authorizer.isAuthorized(sender))
             .thenReturn(true);
         when(authorizer.getRequiredAuthorizedKeys())
             .thenReturn(1);
@@ -341,7 +366,7 @@ class BridgeSupportTest extends BridgeSupportTestBase {
     @Test
     void increaseLockingCap_unauthorized() {
         AddressBasedAuthorizer authorizer = mock(AddressBasedAuthorizer.class);
-        when(authorizer.isAuthorized(any(Transaction.class))).thenReturn(false);
+        when(authorizer.isAuthorized(any(Transaction.class), any())).thenReturn(false);
 
         BridgeConstants constants = mock(BridgeConstants.class);
         when(constants.getIncreaseLockingCapAuthorizer()).thenReturn(authorizer);
@@ -360,7 +385,7 @@ class BridgeSupportTest extends BridgeSupportTestBase {
         when(provider.getLockingCap()).thenReturn(Coin.COIN);
 
         AddressBasedAuthorizer authorizer = mock(AddressBasedAuthorizer.class);
-        when(authorizer.isAuthorized(any(Transaction.class))).thenReturn(true);
+        when(authorizer.isAuthorized(any(Transaction.class), any())).thenReturn(true);
 
         BridgeConstants constants = mock(BridgeConstants.class);
         when(constants.getIncreaseLockingCapAuthorizer()).thenReturn(authorizer);
@@ -380,7 +405,7 @@ class BridgeSupportTest extends BridgeSupportTestBase {
         when(provider.getLockingCap()).thenReturn(Coin.COIN);
 
         AddressBasedAuthorizer authorizer = mock(AddressBasedAuthorizer.class);
-        when(authorizer.isAuthorized(any(Transaction.class))).thenReturn(true);
+        when(authorizer.isAuthorized(any(Transaction.class), any())).thenReturn(true);
 
         BridgeConstants constants = mock(BridgeConstants.class);
         when(constants.getIncreaseLockingCapAuthorizer()).thenReturn(authorizer);
@@ -404,7 +429,7 @@ class BridgeSupportTest extends BridgeSupportTestBase {
         when(provider.getLockingCap()).thenReturn(lastValue);
 
         AddressBasedAuthorizer authorizer = mock(AddressBasedAuthorizer.class);
-        when(authorizer.isAuthorized(any(Transaction.class))).thenReturn(true);
+        when(authorizer.isAuthorized(any(Transaction.class), any())).thenReturn(true);
 
         BridgeConstants constants = mock(BridgeConstants.class);
         when(constants.getIncreaseLockingCapAuthorizer()).thenReturn(authorizer);
@@ -1985,7 +2010,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new PeginInstructionsProvider(),
             executionBlock,
             mockFactory,
-            activations
+            activations,
+                signatureCache
         );
         byte[] bits = new byte[1];
         bits[0] = 0x3f;
@@ -2072,7 +2098,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             peginInstructionsProvider,
             executionBlock,
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
         byte[] bits = new byte[1];
         bits[0] = 0x3f;
@@ -2160,7 +2187,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new PeginInstructionsProvider(),
             executionBlock,
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
         byte[] bits = new byte[1];
         bits[0] = 0x3f;
@@ -2246,7 +2274,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new PeginInstructionsProvider(),
             executionBlock,
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
         byte[] bits = new byte[1];
         bits[0] = 0x3f;
@@ -2342,7 +2371,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new PeginInstructionsProvider(),
             executionBlock,
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
         byte[] bits = new byte[1];
         bits[0] = 0x3f;
@@ -2423,7 +2453,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new PeginInstructionsProvider(),
             executionBlock,
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
         byte[] bits = new byte[1];
         bits[0] = 0x3f;
@@ -2505,7 +2536,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new PeginInstructionsProvider(),
             executionBlock,
             mockFactory,
-            activations
+            activations,
+        signatureCache
         );
         byte[] bits = new byte[1];
         bits[0] = 0x3f;
@@ -2590,7 +2622,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new PeginInstructionsProvider(),
             executionBlock,
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
         byte[] bits = new byte[1];
         bits[0] = 0x3f;
@@ -2686,7 +2719,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new PeginInstructionsProvider(),
             executionBlock,
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
         byte[] bits = new byte[1];
         bits[0] = 0x3f;
@@ -2762,7 +2796,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new PeginInstructionsProvider(),
             executionBlock,
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
         byte[] bits = new byte[1];
         bits[0] = 0x3f;
@@ -2853,7 +2888,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new PeginInstructionsProvider(),
             executionBlock,
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
         byte[] bits = new byte[1];
         bits[0] = 0x3f;
@@ -2929,7 +2965,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new PeginInstructionsProvider(),
             executionBlock,
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
         byte[] bits = new byte[1];
         bits[0] = 0x3f;
@@ -3143,7 +3180,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new PeginInstructionsProvider(),
             mock(Block.class),
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
 
         CoinbaseInformation coinbaseInformation = new CoinbaseInformation(witnessMerkleRoot);
@@ -3241,7 +3279,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new PeginInstructionsProvider(),
             mock(Block.class),
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
 
         bridgeSupport.registerBtcTransaction(mock(Transaction.class), tx1.bitcoinSerialize(), height, pmtWithWitness.bitcoinSerialize());
@@ -3333,7 +3372,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new PeginInstructionsProvider(),
             mock(Block.class),
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
 
         CoinbaseInformation coinbaseInformation = new CoinbaseInformation(Sha256Hash.ZERO_HASH);
@@ -3421,7 +3461,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new PeginInstructionsProvider(),
             mock(Block.class),
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
 
         bridgeSupport.registerBtcTransaction(mock(Transaction.class), tx1.bitcoinSerialize(), height, pmtWithoutWitness.bitcoinSerialize());
@@ -3507,7 +3548,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new PeginInstructionsProvider(),
             mock(Block.class),
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
 
         bridgeSupport.registerBtcTransaction(mock(Transaction.class), tx1.bitcoinSerialize(), height, pmtWithoutWitness.bitcoinSerialize());
@@ -3610,7 +3652,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             peginInstructionsProvider,
             mock(Block.class),
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
 
         // Act
@@ -3724,7 +3767,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             peginInstructionsProvider,
             mock(Block.class),
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
 
         // Act
@@ -3828,7 +3872,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             peginInstructionsProvider,
             mock(Block.class),
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
 
         // Act
@@ -3870,7 +3915,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(PeginInstructionsProvider.class),
             mock(Block.class),
             mock(BtcBlockStoreWithCache.Factory.class),
-            activations
+            activations,
+            signatureCache
         );
 
         Sha256Hash merkleRoot = PegTestUtils.createHash(1);
@@ -3892,7 +3938,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(PeginInstructionsProvider.class),
             mock(Block.class),
             mock(BtcBlockStoreWithCache.Factory.class),
-            activations
+            activations,
+            signatureCache
         );
 
         Sha256Hash merkleRoot = PegTestUtils.createHash(1);
@@ -3918,7 +3965,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(PeginInstructionsProvider.class),
             mock(Block.class),
             mock(BtcBlockStoreWithCache.Factory.class),
-            activations
+            activations,
+            signatureCache
         );
 
         BtcBlock btcBlock = mock(BtcBlock.class);
@@ -3946,7 +3994,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(PeginInstructionsProvider.class),
             mock(Block.class),
             mock(BtcBlockStoreWithCache.Factory.class),
-            activations
+            activations,
+            signatureCache
         );
 
         BtcBlock btcBlock = mock(BtcBlock.class);
@@ -3975,7 +4024,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(PeginInstructionsProvider.class),
             mock(Block.class),
             mock(BtcBlockStoreWithCache.Factory.class),
-            activations
+            activations,
+            signatureCache
         );
 
         BtcBlock btcBlock = mock(BtcBlock.class);
@@ -4114,7 +4164,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(PeginInstructionsProvider.class),
             mock(Block.class),
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
 
         MerkleBranch merkleBranch = mock(MerkleBranch.class);
@@ -4195,7 +4246,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(PeginInstructionsProvider.class),
             mock(Block.class),
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
 
         MerkleBranch merkleBranch = mock(MerkleBranch.class);
@@ -4269,7 +4321,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(PeginInstructionsProvider.class),
             mock(Block.class),
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
 
         MerkleBranch merkleBranch = mock(MerkleBranch.class);
@@ -4330,7 +4383,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(PeginInstructionsProvider.class),
             mock(Block.class),
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
 
         MerkleBranch merkleBranch = mock(MerkleBranch.class);
@@ -4400,7 +4454,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(PeginInstructionsProvider.class),
             mock(Block.class),
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
 
         MerkleBranch merkleBranch = mock(MerkleBranch.class);
@@ -4442,7 +4497,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(PeginInstructionsProvider.class),
             mock(Block.class),
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
 
         byte[] bits = new byte[1];
@@ -4496,7 +4552,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(PeginInstructionsProvider.class),
             mock(Block.class),
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
 
         //Leaving no confirmation blocks
@@ -4546,7 +4603,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(PeginInstructionsProvider.class),
             mock(Block.class),
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
 
         byte[] bits = new byte[1];
@@ -4600,7 +4658,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(PeginInstructionsProvider.class),
             mock(Block.class),
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
 
         byte[] bits = new byte[1];
@@ -4674,7 +4733,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(PeginInstructionsProvider.class),
             mock(Block.class),
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
 
         byte[] bits = new byte[1];
@@ -4748,7 +4808,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(PeginInstructionsProvider.class),
             mock(Block.class),
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
 
         byte[] bits = new byte[1];
@@ -4830,7 +4891,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(PeginInstructionsProvider.class),
             mock(Block.class),
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
 
         byte[] bits = new byte[1];
@@ -4890,7 +4952,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(PeginInstructionsProvider.class),
             mock(Block.class),
             mock(BtcBlockStoreWithCache.Factory.class),
-            activations
+            activations,
+            signatureCache
         );
 
         CoinbaseInformation coinbaseInformation = new CoinbaseInformation(Sha256Hash.ZERO_HASH);
@@ -4914,7 +4977,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(PeginInstructionsProvider.class),
             mock(Block.class),
             mock(BtcBlockStoreWithCache.Factory.class),
-            activations
+            activations,
+            signatureCache
         );
 
         CoinbaseInformation coinbaseInformation = new CoinbaseInformation(Sha256Hash.ZERO_HASH);
@@ -4938,7 +5002,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(PeginInstructionsProvider.class),
             mock(Block.class),
             mock(BtcBlockStoreWithCache.Factory.class),
-            activations
+            activations,
+            signatureCache
         );
 
         Assertions.assertFalse(bridgeSupport.hasBtcBlockCoinbaseTransactionInformation(Sha256Hash.ZERO_HASH));
@@ -5245,7 +5310,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(Context.class),
             mock(FederationSupport.class),
             btcBlockStoreFactory,
-            mock(ActivationConfig.ForBlock.class)
+            mock(ActivationConfig.ForBlock.class),
+            signatureCache
         );
 
         Assertions.assertFalse(bridgeSupport.validationsForRegisterBtcTransaction(tx.getHash(), height, pmt.bitcoinSerialize(), tx.bitcoinSerialize()));
@@ -5296,7 +5362,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(Context.class),
             mock(FederationSupport.class),
             btcBlockStoreFactory,
-            mock(ActivationConfig.ForBlock.class)
+            mock(ActivationConfig.ForBlock.class),
+            signatureCache
         );
 
         Assertions.assertTrue(bridgeSupport.validationsForRegisterBtcTransaction(tx.getHash(), height, pmt.bitcoinSerialize(), tx.bitcoinSerialize()));
@@ -5333,7 +5400,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new Context(bridgeConstantsRegtest.getBtcParams()),
             mockFederationSupport,
             null,
-            null
+            null,
+            signatureCache
         );
 
         when(mockFederationSupport.getActiveFederation()).thenReturn(activeFederation);
@@ -5361,7 +5429,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new Context(bridgeConstantsRegtest.getBtcParams()),
             mockFederationSupport,
             null,
-            null
+            null,
+            signatureCache
         );
 
         // Creates retiring federation
@@ -5417,7 +5486,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new Context(bridgeConstantsRegtest.getBtcParams()),
             mockFederationSupport,
             null,
-            null
+            null,
+            signatureCache
         );
 
         // Creates retiring federation
@@ -5647,7 +5717,7 @@ class BridgeSupportTest extends BridgeSupportTestBase {
 
         ActivationConfig.ForBlock activations = mock(ActivationConfig.ForBlock.class);
         List<LogInfo> logs = new ArrayList<>();
-        BridgeEventLogger eventLogger = new BrigeEventLoggerLegacyImpl(bridgeConstantsRegtest, activations, logs);
+        BridgeEventLogger eventLogger = new BrigeEventLoggerLegacyImpl(bridgeConstantsRegtest, activations, logs, signatureCache);
         BridgeSupport bridgeSupport = getBridgeSupport(
             bridgeConstantsRegtest,
             new BridgeStorageProvider(
@@ -5815,7 +5885,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new Context(bridgeConstantsRegtest.getBtcParams()),
             mockFederationSupport,
             null,
-            mock(ActivationConfig.ForBlock.class)
+            mock(ActivationConfig.ForBlock.class),
+            signatureCache
         );
 
         Federation retiringFederation = bridgeConstantsRegtest.getGenesisFederation();
@@ -6279,7 +6350,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             mock(PeginInstructionsProvider.class),
             mock(Block.class),
             mock(BtcBlockStoreWithCache.Factory.class),
-            activations
+            activations,
+            signatureCache
         );
 
         // Act
@@ -6334,7 +6406,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             peginInstructionsProvider,
             mock(Block.class),
             mock(BtcBlockStoreWithCache.Factory.class),
-            activations
+            activations,
+            signatureCache
         );
 
         // Act
@@ -6668,7 +6741,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new PeginInstructionsProvider(),
             mock(Block.class),
             mock(BtcBlockStoreWithCache.Factory.class),
-            activations
+            activations,
+            signatureCache
         );
 
         // Act
@@ -7035,7 +7109,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             peginInstructionsProvider,
             mock(Block.class),
             mock(BtcBlockStoreWithCache.Factory.class),
-            activations
+            activations,
+            signatureCache
         );
 
         // Act
@@ -7208,7 +7283,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new PeginInstructionsProvider(),
             executionBlock,
             mockFactory,
-            activations
+            activations,
+            signatureCache
         );
 
         // Simulate blockchain
@@ -7293,7 +7369,7 @@ class BridgeSupportTest extends BridgeSupportTestBase {
         track = repository.startTracking();
         ActivationConfig.ForBlock activations = mock(ActivationConfig.ForBlock.class);
         List<LogInfo> logs = new ArrayList<>();
-        BridgeEventLogger eventLogger = new BrigeEventLoggerLegacyImpl(bridgeConstantsRegtest, activations, logs);
+        BridgeEventLogger eventLogger = new BrigeEventLoggerLegacyImpl(bridgeConstantsRegtest, activations, logs, signatureCache);
         BridgeSupport bridgeSupport = getBridgeSupport(
             bridgeConstantsRegtest,
             new BridgeStorageProvider(
@@ -7407,7 +7483,7 @@ class BridgeSupportTest extends BridgeSupportTestBase {
     private BridgeSupport getBridgeSupport(BridgeConstants constants, BridgeStorageProvider provider, Repository track,
         BtcLockSenderProvider btcLockSenderProvider, PeginInstructionsProvider peginInstructionsProvider,
         Block executionBlock, BtcBlockStoreWithCache.Factory blockStoreFactory,
-        ActivationConfig.ForBlock activations) {
+        ActivationConfig.ForBlock activations, SignatureCache signatureCache) {
 
         if (btcLockSenderProvider == null) {
             btcLockSenderProvider = mock(BtcLockSenderProvider.class);
@@ -7429,7 +7505,8 @@ class BridgeSupportTest extends BridgeSupportTestBase {
             new Context(constants.getBtcParams()),
             new FederationSupport(constants, provider, executionBlock),
             blockStoreFactory,
-            activations
+            activations,
+            signatureCache
         );
     }
 

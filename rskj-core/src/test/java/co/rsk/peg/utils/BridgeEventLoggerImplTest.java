@@ -15,7 +15,6 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
 package co.rsk.peg.utils;
 
 import co.rsk.bitcoinj.core.*;
@@ -24,9 +23,7 @@ import co.rsk.core.RskAddress;
 import co.rsk.crypto.Keccak256;
 import co.rsk.peg.*;
 import org.bouncycastle.util.encoders.Hex;
-import org.ethereum.core.Block;
-import org.ethereum.core.CallTransaction;
-import org.ethereum.core.Transaction;
+import org.ethereum.core.*;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.util.ByteUtil;
 import org.ethereum.vm.LogInfo;
@@ -44,6 +41,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -60,11 +58,13 @@ class BridgeEventLoggerImplTest {
     private BridgeEventLogger eventLogger;
     private BtcTransaction btcTxMock;
     private BtcTransaction btcTx;
+    private SignatureCache signatureCache;
 
     @BeforeEach
     void setup() {
+        signatureCache = new BlockTxSignatureCache(new ReceivedTxSignatureCache());
         eventLogs = new LinkedList<>();
-        eventLogger = new BridgeEventLoggerImpl(CONSTANTS, eventLogs);
+        eventLogger = new BridgeEventLoggerImpl(CONSTANTS, eventLogs, signatureCache);
         btcTxMock = mock(BtcTransaction.class);
         btcTx = new BtcTransaction(CONSTANTS.getBtcParams());
     }
@@ -114,7 +114,7 @@ class BridgeEventLoggerImplTest {
     void logPeginBtc() {
         // Setup event logger
         List<LogInfo> eventLogs = new LinkedList<>();
-        BridgeEventLogger eventLogger = new BridgeEventLoggerImpl(null, eventLogs);
+        BridgeEventLogger eventLogger = new BridgeEventLoggerImpl(null, eventLogs, signatureCache);
 
         RskAddress rskAddress = mock(RskAddress.class);
         when(rskAddress.toString()).thenReturn("0x00000000000000000000000000000000000000");
@@ -156,14 +156,14 @@ class BridgeEventLoggerImplTest {
         Transaction tx = mock(Transaction.class);
         RskAddress sender = mock(RskAddress.class);
         when(sender.toString()).thenReturn("0x0000000000000000000000000000000000000001");
-        when(tx.getSender()).thenReturn(sender);
+        when(tx.getSender(any(SignatureCache.class))).thenReturn(sender);
 
         // Act
         eventLogger.logUpdateCollections(tx);
 
         commonAssertLogs(eventLogs);
         assertTopics(1, eventLogs);
-        assertEvent(eventLogs, 0, BridgeEvents.UPDATE_COLLECTIONS.getEvent(), new Object[]{}, new Object[]{tx.getSender().toString()});
+        assertEvent(eventLogs, 0, BridgeEvents.UPDATE_COLLECTIONS.getEvent(), new Object[]{}, new Object[]{tx.getSender(signatureCache).toString()});
     }
 
     @Test
@@ -274,7 +274,7 @@ class BridgeEventLoggerImplTest {
         // Setup event logger
         List<LogInfo> eventLogs = new LinkedList<>();
 
-        BridgeEventLogger eventLogger = new BridgeEventLoggerImpl(null, eventLogs);
+        BridgeEventLogger eventLogger = new BridgeEventLoggerImpl(null, eventLogs, signatureCache);
 
         BtcTransaction btcTx = new BtcTransaction(BridgeRegTestConstants.getInstance().getBtcParams());
 
@@ -308,7 +308,7 @@ class BridgeEventLoggerImplTest {
         // Setup event logger
         List<LogInfo> eventLogs = new LinkedList<>();
 
-        BridgeEventLogger eventLogger = new BridgeEventLoggerImpl(null, eventLogs);
+        BridgeEventLogger eventLogger = new BridgeEventLoggerImpl(null, eventLogs, signatureCache);
 
         BtcTransaction btcTx = new BtcTransaction(BridgeRegTestConstants.getInstance().getBtcParams());
 

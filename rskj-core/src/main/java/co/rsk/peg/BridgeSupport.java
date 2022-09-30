@@ -15,7 +15,6 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
 package co.rsk.peg;
 
 import co.rsk.bitcoinj.core.Address;
@@ -87,6 +86,7 @@ import org.ethereum.config.blockchain.upgrades.ActivationConfig;
 import org.ethereum.config.blockchain.upgrades.ConsensusRule;
 import org.ethereum.core.Block;
 import org.ethereum.core.Repository;
+import org.ethereum.core.SignatureCache;
 import org.ethereum.core.Transaction;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.crypto.HashUtil;
@@ -172,6 +172,8 @@ public class BridgeSupport {
     private final org.ethereum.core.Block rskExecutionBlock;
     private final ActivationConfig.ForBlock activations;
 
+    private final SignatureCache signatureCache;
+
     protected enum TxType {
         PEGIN,
         PEGOUT,
@@ -190,7 +192,8 @@ public class BridgeSupport {
             Context btcContext,
             FederationSupport federationSupport,
             BtcBlockStoreWithCache.Factory btcBlockStoreFactory,
-            ActivationConfig.ForBlock activations) {
+            ActivationConfig.ForBlock activations,
+            SignatureCache signatureCache) {
         this.rskRepository = repository;
         this.provider = provider;
         this.rskExecutionBlock = executionBlock;
@@ -202,6 +205,7 @@ public class BridgeSupport {
         this.federationSupport = federationSupport;
         this.btcBlockStoreFactory = btcBlockStoreFactory;
         this.activations = activations;
+        this.signatureCache = signatureCache;
     }
 
     public List<ProgramSubtrace> getSubtraces() {
@@ -774,7 +778,7 @@ public class BridgeSupport {
      */
     public void releaseBtc(Transaction rskTx) throws IOException {
         Coin value = rskTx.getValue().toBitcoin();
-        final RskAddress senderAddress = rskTx.getSender();
+        final RskAddress senderAddress = rskTx.getSender(signatureCache);
         //as we can't send btc from contracts we want to send them back to the senderAddressStr
         if (BridgeUtils.isContractTx(rskTx)) {
             logger.trace("Contract {} tried to release funds. Release is just allowed from standard accounts.", rskTx);
@@ -864,7 +868,7 @@ public class BridgeSupport {
             if (activations.isActive(ConsensusRule.RSKIP185)) {
                 refundAndEmitRejectEvent(
                     value,
-                    rskTx.getSender(),
+                    rskTx.getSender(signatureCache),
                     optionalRejectedPegoutReason.get()
                 );
             }
@@ -876,7 +880,7 @@ public class BridgeSupport {
             }
 
             if (activations.isActive(ConsensusRule.RSKIP185)) {
-                eventLogger.logReleaseBtcRequestReceived(rskTx.getSender().toHexString(), destinationAddress.getHash160(), value);
+                eventLogger.logReleaseBtcRequestReceived(rskTx.getSender(signatureCache).toHexString(), destinationAddress.getHash160(), value);
             }
             logger.info("releaseBtc succesful to {}. Tx {}. Value {}.", destinationAddress, rskTx, value);
         }
@@ -2090,7 +2094,7 @@ public class BridgeSupport {
         AddressBasedAuthorizer authorizer = bridgeConstants.getFederationChangeAuthorizer();
 
         // Must be authorized to vote (checking for signature)
-        if (!authorizer.isAuthorized(tx)) {
+        if (!authorizer.isAuthorized(tx, signatureCache)) {
             return FEDERATION_CHANGE_GENERIC_ERROR_CODE;
         }
 
@@ -2110,7 +2114,7 @@ public class BridgeSupport {
 
         ABICallElection election = provider.getFederationElection(authorizer);
         // Register the vote. It is expected to succeed, since all previous checks succeeded
-        if (!election.vote(callSpec, tx.getSender())) {
+        if (!election.vote(callSpec, tx.getSender(signatureCache))) {
             logger.warn("Unexpected federation change vote failure");
             return FEDERATION_CHANGE_GENERIC_ERROR_CODE;
         }
@@ -2355,7 +2359,7 @@ public class BridgeSupport {
     private boolean isLockWhitelistChangeAuthorized(Transaction tx) {
         AddressBasedAuthorizer authorizer = bridgeConstants.getLockWhitelistChangeAuthorizer();
 
-        return authorizer.isAuthorized(tx);
+        return authorizer.isAuthorized(tx, signatureCache);
     }
 
     /**
@@ -2407,7 +2411,7 @@ public class BridgeSupport {
      */
     public Integer voteFeePerKbChange(Transaction tx, Coin feePerKb) {
         AddressBasedAuthorizer authorizer = bridgeConstants.getFeePerKbChangeAuthorizer();
-        if (!authorizer.isAuthorized(tx)) {
+        if (!authorizer.isAuthorized(tx, signatureCache)) {
             return FEE_PER_KB_GENERIC_ERROR_CODE;
         }
 
@@ -2421,7 +2425,7 @@ public class BridgeSupport {
 
         ABICallElection feePerKbElection = provider.getFeePerKbElection(authorizer);
         ABICallSpec feeVote = new ABICallSpec("setFeePerKb", new byte[][]{BridgeSerializationUtils.serializeCoin(feePerKb)});
-        boolean successfulVote = feePerKbElection.vote(feeVote, tx.getSender());
+        boolean successfulVote = feePerKbElection.vote(feeVote, tx.getSender(signatureCache));
         if (!successfulVote) {
             return -1;
         }
@@ -2503,8 +2507,8 @@ public class BridgeSupport {
     public boolean increaseLockingCap(Transaction tx, Coin newCap) {
         // Only pre configured addresses can modify locking cap
         AddressBasedAuthorizer authorizer = bridgeConstants.getIncreaseLockingCapAuthorizer();
-        if (!authorizer.isAuthorized(tx)) {
-            logger.warn("not authorized address tried to increase locking cap. Address: {}", tx.getSender());
+        if (!authorizer.isAuthorized(tx, signatureCache)) {
+            logger.warn("not authorized address tried to increase locking cap. Address: {}", tx.getSender(signatureCache));
             return false;
         }
         // new locking cap must be bigger than current locking cap
@@ -2670,10 +2674,10 @@ public class BridgeSupport {
             return BigInteger.valueOf(FlyoverTxResponseCodes.UNPROCESSABLE_TX_NOT_CONTRACT_ERROR.value());
         }
 
-        if (!rskTx.getSender().equals(lbcAddress)) {
+        if (!rskTx.getSender(signatureCache).equals(lbcAddress)) {
             logger.debug(
                 "[registerFlyoverBtcTransaction] Expected sender to be the same as lbcAddress. (sender: {}) (lbcAddress:{})",
-                rskTx.getSender(),
+                rskTx.getSender(signatureCache),
                 lbcAddress
             );
             return BigInteger.valueOf(FlyoverTxResponseCodes.UNPROCESSABLE_TX_INVALID_SENDER_ERROR.value());
