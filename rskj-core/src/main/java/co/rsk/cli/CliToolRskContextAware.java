@@ -18,6 +18,7 @@
 package co.rsk.cli;
 
 import co.rsk.RskContext;
+import co.rsk.cli.exceptions.PicocliBadResultException;
 import co.rsk.config.RskSystemProperties;
 import co.rsk.util.Factory;
 import co.rsk.util.NodeStopper;
@@ -75,6 +76,9 @@ public abstract class CliToolRskContextAware {
 
             printInfo("{} finished", cliToolName);
             stopper.stop(0);
+        }catch (PicocliBadResultException e) {
+            printError("{} failed", cliToolName, e);
+            stopper.stop(e.getErrorCode());
         } catch (Exception e) {
             printError("{} failed", cliToolName, e);
             stopper.stop(1);
