@@ -502,7 +502,7 @@ public class CliToolsTest {
         NodeStopper stopper = mock(NodeStopper.class);
 
         DbMigrate dbMigrateCliTool = new DbMigrate();
-        dbMigrateCliTool.execute(new String[]{"rocksdb"}, () -> rskContext, stopper);
+        dbMigrateCliTool.execute(new String[]{"-tdb", "rocksdb"}, () -> rskContext, stopper);
 
         String nodeIdPropsFileLine = null;
 
