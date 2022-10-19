@@ -62,8 +62,6 @@ import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import picocli.CommandLine;
-import org.mockito.Mockito;
-import picocli.CommandLine;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -683,12 +681,14 @@ public class CliToolsTest {
         File workDir = new File(classLoader.getResource("doc/rpc").getFile());
         File destFile = new File(tempFolder.getRoot(), "generated_openrpc.json");
 
-        GenerateOpenRpcDoc generateOpenRpcDocCliTool = new GenerateOpenRpcDoc();
-
-        String[] args = new String[]{version, workDir.getAbsolutePath(), destFile.getAbsolutePath()};
+        GenerateOpenRpcDoc generateOpenRpcDocCliTool = new GenerateOpenRpcDoc(
+                version,
+                workDir.getAbsolutePath(),
+                destFile.getAbsolutePath()
+        );
 
         try {
-            generateOpenRpcDocCliTool.execute(args);
+            generateOpenRpcDocCliTool.call();
         } catch (RuntimeException e) {
             fail("should have not thrown " + e.getMessage());
         }
