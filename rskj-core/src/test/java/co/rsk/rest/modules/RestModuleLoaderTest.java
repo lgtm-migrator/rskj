@@ -18,23 +18,24 @@
 package co.rsk.rest.modules;
 
 import co.rsk.rest.dto.RestModuleConfigDTO;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class RestModuleLoaderTest {
+import static org.junit.jupiter.api.Assertions.*;
+
+class RestModuleLoaderTest {
 
     @Test
-    public void testConstructor_nullRestModuleConfiguration_throwsException() {
+    void testConstructor_nullRestModuleConfiguration_throwsException() {
         try {
             new RestModuleLoader(null);
-            Assert.fail("Null Pointer Exception should be thrown");
+            fail("Null Pointer Exception should be thrown");
         } catch (NullPointerException npe) {
-            Assert.assertEquals("REST Module Config can not be null", npe.getMessage());
+            assertEquals("REST Module Config can not be null", npe.getMessage());
         }
     }
 
     @Test
-    public void testModuleMapping_activeConfiguration_OK() {
+    void testModuleMapping_activeConfiguration_OK() {
         // Given
         RestModuleConfigDTO restModuleConfigDTO = new RestModuleConfigDTO(true);
 
@@ -45,15 +46,15 @@ public class RestModuleLoaderTest {
 
         // Health-Check Module
         RestModule healthCheckModule = restModuleLoader.getRestModules().get(0);
-        Assert.assertTrue(healthCheckModule.isActive());
-        Assert.assertEquals("/health-check", healthCheckModule.getUri());
+        assertTrue(healthCheckModule.isActive());
+        assertEquals("/health-check", healthCheckModule.getUri());
 
         // Other Modules
         // ...
     }
 
     @Test
-    public void testModuleMapping_inactiveConfiguration_OK() {
+    void testModuleMapping_inactiveConfiguration_OK() {
         // Given
         // Health-Check Module
         RestModuleConfigDTO restModuleConfigDTO = new RestModuleConfigDTO(false);
@@ -67,8 +68,8 @@ public class RestModuleLoaderTest {
         // Then
         // Health-Check Module
         RestModule healthCheckModule = restModuleLoader.getRestModules().get(0);
-        Assert.assertFalse(healthCheckModule.isActive());
-        Assert.assertEquals("/health-check", healthCheckModule.getUri());
+        assertFalse(healthCheckModule.isActive());
+        assertEquals("/health-check", healthCheckModule.getUri());
 
         // Other Modules
         // ...

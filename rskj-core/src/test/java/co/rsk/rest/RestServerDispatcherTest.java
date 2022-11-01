@@ -20,20 +20,20 @@ package co.rsk.rest;
 import co.rsk.rest.modules.RestModule;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.*;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class RestServerDispatcherTest {
+class RestServerDispatcherTest {
 
-    private class DummyTestModule extends RestModule {
+    private static class DummyTestModule extends RestModule {
 
         protected DummyTestModule(String uri, boolean active) {
             super(uri, active);
@@ -50,7 +50,7 @@ public class RestServerDispatcherTest {
 
     private RestServerDispatcher restServerDispatcher;
 
-    @Before
+    @BeforeEach
     public void setup() {
         List<RestModule> moduleList = new ArrayList<>();
 
@@ -64,17 +64,17 @@ public class RestServerDispatcherTest {
     }
 
     @Test
-    public void testConstructor_nullModuleList_throwsException() {
+    void testConstructor_nullModuleList_throwsException() {
         try {
             new RestServerDispatcher(null);
-            Assert.fail("Null Pointer Exception should be thrown");
+            fail("Null Pointer Exception should be thrown");
         } catch (NullPointerException npe) {
-            Assert.assertEquals("Module List can not be null", npe.getMessage());
+            assertEquals("Module List can not be null", npe.getMessage());
         }
     }
 
     @Test
-    public void testDispatch_unsupportedUri_returnsNotFound() throws URISyntaxException {
+    void testDispatch_unsupportedUri_returnsNotFound() throws URISyntaxException {
         // Given
         String uri = "/unsupported.uri/does.not.exists";
         HttpRequest requestMock = mock(HttpRequest.class);
@@ -84,14 +84,14 @@ public class RestServerDispatcherTest {
         DefaultFullHttpResponse response = restServerDispatcher.dispatch(requestMock);
 
         // Then
-        Assert.assertNotNull(response);
-        Assert.assertEquals(HttpResponseStatus.NOT_FOUND, response.getStatus());
-        Assert.assertEquals(Unpooled.copiedBuffer("Not Found", StandardCharsets.UTF_8),
+        assertNotNull(response);
+        assertEquals(HttpResponseStatus.NOT_FOUND, response.getStatus());
+        assertEquals(Unpooled.copiedBuffer("Not Found", StandardCharsets.UTF_8),
                 response.content());
     }
 
     @Test
-    public void testDispatch_supportedUri_inactiveModule_returnsNotFound() throws URISyntaxException {
+    void testDispatch_supportedUri_inactiveModule_returnsNotFound() throws URISyntaxException {
         // Given
         String uri = "test.url.inactive";
         HttpRequest requestMock = mock(HttpRequest.class);
@@ -101,14 +101,14 @@ public class RestServerDispatcherTest {
         DefaultFullHttpResponse response = restServerDispatcher.dispatch(requestMock);
 
         // Then
-        Assert.assertNotNull(response);
-        Assert.assertEquals(HttpResponseStatus.NOT_FOUND, response.getStatus());
-        Assert.assertEquals(Unpooled.copiedBuffer("Not Found", StandardCharsets.UTF_8),
+        assertNotNull(response);
+        assertEquals(HttpResponseStatus.NOT_FOUND, response.getStatus());
+        assertEquals(Unpooled.copiedBuffer("Not Found", StandardCharsets.UTF_8),
                 response.content());
     }
 
     @Test
-    public void testDispatch_supportedUri_activeModule_executesAsExpected() throws URISyntaxException {
+    void testDispatch_supportedUri_activeModule_executesAsExpected() throws URISyntaxException {
         // Given
         String uri = "test.url.active";
         HttpRequest requestMock = mock(HttpRequest.class);
@@ -118,9 +118,9 @@ public class RestServerDispatcherTest {
         DefaultFullHttpResponse response = restServerDispatcher.dispatch(requestMock);
 
         // Then
-        Assert.assertNotNull(response);
-        Assert.assertEquals(HttpResponseStatus.OK, response.getStatus());
-        Assert.assertEquals(Unpooled.copiedBuffer("test", StandardCharsets.UTF_8),
+        assertNotNull(response);
+        assertEquals(HttpResponseStatus.OK, response.getStatus());
+        assertEquals(Unpooled.copiedBuffer("test", StandardCharsets.UTF_8),
                 response.content());
     }
 

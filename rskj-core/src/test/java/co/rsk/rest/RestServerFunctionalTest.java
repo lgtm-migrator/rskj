@@ -22,17 +22,19 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import org.awaitility.Awaitility;
-import org.awaitility.Duration;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-public class RestServerFunctionalTest {
+import static org.awaitility.Durations.TEN_SECONDS;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
+class RestServerFunctionalTest {
 
     @Test
-    public void test_completeTrips() throws UnknownHostException {
+    void test_completeTrips() throws UnknownHostException {
         // Given
 
         InetAddress inetHost = InetAddress.getByName("localhost");
@@ -50,7 +52,7 @@ public class RestServerFunctionalTest {
             // When
             thread.start();
 
-            Awaitility.await().timeout(Duration.TEN_SECONDS).until(thread::isAlive);
+            Awaitility.await().timeout(TEN_SECONDS).until(thread::isAlive);
 
             Request httpRequest;
             Response response;
@@ -61,9 +63,9 @@ public class RestServerFunctionalTest {
 
             response = httpClient.newCall(httpRequest).execute();
 
-            Assert.assertEquals(200, response.code());
-            Assert.assertEquals("OK", response.message());
-            Assert.assertEquals("pong", response.body().string());
+            assertEquals(200, response.code());
+            assertEquals("OK", response.message());
+            assertEquals("pong", response.body().string());
 
             // Health-check module with wrong url should return "Not Found" (404)
 
@@ -71,9 +73,9 @@ public class RestServerFunctionalTest {
 
             response = httpClient.newCall(httpRequest).execute();
 
-            Assert.assertEquals(404, response.code());
-            Assert.assertEquals("Not Found", response.message());
-            Assert.assertEquals("Not Found", response.body().string());
+            assertEquals(404, response.code());
+            assertEquals("Not Found", response.message());
+            assertEquals("Not Found", response.body().string());
 
             // Unhandled request should return "Not Found" (404)
 
@@ -81,13 +83,13 @@ public class RestServerFunctionalTest {
 
             response = httpClient.newCall(httpRequest).execute();
 
-            Assert.assertEquals(404, response.code());
-            Assert.assertEquals("Not Found", response.message());
-            Assert.assertEquals("Not Found", response.body().string());
+            assertEquals(404, response.code());
+            assertEquals("Not Found", response.message());
+            assertEquals("Not Found", response.body().string());
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            Assert.fail("Rest Server test failed");
+            fail("Rest Server test failed");
         } finally {
             restServer.stop();
             thread.interrupt();
