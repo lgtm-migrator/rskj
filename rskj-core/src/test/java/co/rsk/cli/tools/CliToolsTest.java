@@ -38,7 +38,6 @@ import co.rsk.util.PreflightChecksUtils;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.ethereum.TestUtils;
 import org.ethereum.config.blockchain.upgrades.ActivationConfigsForTest;
 import org.ethereum.core.Block;
 import org.ethereum.core.BlockFactory;
@@ -376,6 +375,7 @@ class CliToolsTest {
 
     @Test
     void rewindBlocks() {
+        Random random = new Random(100);
         TestSystemProperties config = new TestSystemProperties();
         BlockFactory blockFactory = new BlockFactory(config.getActivationConfig());
         KeyValueDataSource keyValueDataSource = new HashMapDB();
@@ -388,13 +388,16 @@ class CliToolsTest {
         int blocksToGenerate = 14;
 
         Keccak256 parentHash = Keccak256.ZERO_HASH;
+
         for (long i = 0; i < blocksToGenerate; i++) {
             Block block = mock(Block.class);
             Keccak256 blockHash = randomHash();
             when(block.getHash()).thenReturn(blockHash);
             when(block.getParentHash()).thenReturn(parentHash);
             when(block.getNumber()).thenReturn(i);
-            when(block.getEncoded()).thenReturn(TestUtils.randomBytes(128));
+            byte[] randomData = new byte[128];
+            random.nextBytes(randomData);
+            when(block.getEncoded()).thenReturn(randomData);
 
             indexedBlockStore.saveBlock(block, ZERO, true);
             parentHash = blockHash;
