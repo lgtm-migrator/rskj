@@ -18,59 +18,6 @@
 
 package co.rsk.mine;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.time.Clock;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-import org.ethereum.TestUtils;
-import org.ethereum.core.Account;
-import org.ethereum.core.Block;
-import org.ethereum.core.BlockFactory;
-import org.ethereum.core.BlockTxSignatureCache;
-import org.ethereum.core.Blockchain;
-import org.ethereum.core.Genesis;
-import org.ethereum.core.ImportResult;
-import org.ethereum.core.ReceivedTxSignatureCache;
-import org.ethereum.core.Repository;
-import org.ethereum.core.Transaction;
-import org.ethereum.core.TransactionPool;
-import org.ethereum.db.BlockStore;
-import org.ethereum.facade.Ethereum;
-import org.ethereum.facade.EthereumImpl;
-import org.ethereum.listener.CompositeEthereumListener;
-import org.ethereum.listener.GasPriceTracker;
-import org.ethereum.util.BuildInfo;
-import org.ethereum.util.RLP;
-import org.ethereum.util.RLPList;
-import org.ethereum.util.RskTestFactory;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.mockito.Mockito;
-
 import co.rsk.TestHelpers.Tx;
 import co.rsk.bitcoinj.core.BtcBlock;
 import co.rsk.bitcoinj.core.BtcTransaction;
@@ -100,6 +47,53 @@ import co.rsk.test.builders.TransactionBuilder;
 import co.rsk.util.HexUtils;
 import co.rsk.validators.BlockUnclesValidationRule;
 import co.rsk.validators.ProofOfWorkRule;
+import org.ethereum.TestUtils;
+import org.ethereum.core.Account;
+import org.ethereum.core.Block;
+import org.ethereum.core.BlockFactory;
+import org.ethereum.core.BlockTxSignatureCache;
+import org.ethereum.core.Blockchain;
+import org.ethereum.core.Genesis;
+import org.ethereum.core.ImportResult;
+import org.ethereum.core.ReceivedTxSignatureCache;
+import org.ethereum.core.Repository;
+import org.ethereum.core.Transaction;
+import org.ethereum.core.TransactionPool;
+import org.ethereum.db.BlockStore;
+import org.ethereum.facade.Ethereum;
+import org.ethereum.facade.EthereumImpl;
+import org.ethereum.listener.CompositeEthereumListener;
+import org.ethereum.listener.GasPriceTracker;
+import org.ethereum.util.BuildInfo;
+import org.ethereum.util.RLP;
+import org.ethereum.util.RLPList;
+import org.ethereum.util.RskTestFactory;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.time.Clock;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 
 /**
@@ -129,7 +123,7 @@ public abstract class MinerServerTest {
         rskTestContext = new RskTestFactory(config) {
             @Override
             protected RepositoryLocator buildRepositoryLocator() {
-                return Mockito.spy(super.buildRepositoryLocator());
+                return spy(super.buildRepositoryLocator());
             }
         };
         miningMainchainView = rskTestContext.getMiningMainchainView();
@@ -149,8 +143,8 @@ public abstract class MinerServerTest {
                 signatureCache,
                 10,
                 100,
-                Mockito.mock(TxQuotaChecker.class),
-                Mockito.mock(GasPriceTracker.class));
+                mock(TxQuotaChecker.class),
+                mock(GasPriceTracker.class));
 
         transactionPool.processBest(standardBlockchain.getBestBlock());
 
@@ -171,15 +165,15 @@ public abstract class MinerServerTest {
         Repository repository = repositoryLocator.startTrackingAt(blockStore.getBestBlock().getHeader());
         Repository track = mock(Repository.class);
         BlockTxSignatureCache blockTxSignatureCache = mock(BlockTxSignatureCache.class);
-        Mockito.doReturn(repository.getRoot()).when(track).getRoot();
-        Mockito.doReturn(repository.getTrie()).when(track).getTrie();
+        doReturn(repository.getRoot()).when(track).getRoot();
+        doReturn(repository.getTrie()).when(track).getTrie();
         when(track.getNonce(tx1.getSender())).thenReturn(BigInteger.ZERO);
         when(track.getNonce(tx1.getSender(blockTxSignatureCache))).thenReturn(BigInteger.ZERO);
         when(track.getNonce(RemascTransaction.REMASC_ADDRESS)).thenReturn(BigInteger.ZERO);
         when(track.getBalance(tx1.getSender())).thenReturn(Coin.valueOf(4200000L));
         when(track.getBalance(RemascTransaction.REMASC_ADDRESS)).thenReturn(Coin.valueOf(4200000L));
-        Mockito.doReturn(track).when(repositoryLocator).startTrackingAt(any());
-        Mockito.doReturn(track).when(track).startTracking();
+        doReturn(track).when(repositoryLocator).startTrackingAt(any());
+        doReturn(track).when(track).startTracking();
 
         List<Transaction> txs = new ArrayList<>(Collections.singletonList(tx1));
 
@@ -240,7 +234,7 @@ public abstract class MinerServerTest {
 
         Assertions.assertEquals("ERROR", result.getStatus());
 
-        Mockito.verify(ethereumImpl, Mockito.times(1)).addNewMinedBlock(any());
+        verify(ethereumImpl, times(1)).addNewMinedBlock(any());
         } finally {
             minerServer.stop();
         }
@@ -270,7 +264,7 @@ public abstract class MinerServerTest {
             Assertions.assertEquals("0x1", result.getBlockInfo().getBlockIncludedHeight());
             Assertions.assertEquals("0x494d504f525445445f42455354", result.getBlockInfo().getBlockImportedResult());
 
-            Mockito.verify(ethereumImpl, Mockito.times(1)).addNewMinedBlock(any());
+            verify(ethereumImpl, times(1)).addNewMinedBlock(any());
         } finally {
             minerServer.stop();
         }
@@ -303,7 +297,7 @@ public abstract class MinerServerTest {
             Assertions.assertEquals("0x1", result.getBlockInfo().getBlockIncludedHeight());
             Assertions.assertEquals("0x494d504f525445445f42455354", result.getBlockInfo().getBlockImportedResult());
 
-            Mockito.verify(ethereumImpl, Mockito.times(1)).addNewMinedBlock(any());
+            verify(ethereumImpl, times(1)).addNewMinedBlock(any());
         } finally {
             minerServer.stop();
         }
@@ -343,7 +337,7 @@ public abstract class MinerServerTest {
             Assertions.assertEquals("0x1", result.getBlockInfo().getBlockIncludedHeight());
             Assertions.assertEquals("0x494d504f525445445f42455354", result.getBlockInfo().getBlockImportedResult());
 
-            Mockito.verify(ethereumImpl, Mockito.times(1)).addNewMinedBlock(any());
+            verify(ethereumImpl, times(1)).addNewMinedBlock(any());
         } finally {
             minerServer.stop();
         }
@@ -375,7 +369,7 @@ public abstract class MinerServerTest {
             Assertions.assertEquals("0x1", result.getBlockInfo().getBlockIncludedHeight());
             Assertions.assertEquals("0x494d504f525445445f42455354", result.getBlockInfo().getBlockImportedResult());
 
-            Mockito.verify(ethereumImpl, Mockito.times(1)).addNewMinedBlock(any());
+            verify(ethereumImpl, times(1)).addNewMinedBlock(any());
         } finally {
             minerServer.stop();
         }
@@ -413,7 +407,7 @@ public abstract class MinerServerTest {
             Assertions.assertEquals("0x1", result.getBlockInfo().getBlockIncludedHeight());
             Assertions.assertEquals("0x494d504f525445445f42455354", result.getBlockInfo().getBlockImportedResult());
 
-            Mockito.verify(ethereumImpl, Mockito.times(1)).addNewMinedBlock(any());
+            verify(ethereumImpl, times(1)).addNewMinedBlock(any());
         } finally {
             minerServer.stop();
         }
@@ -484,17 +478,17 @@ public abstract class MinerServerTest {
     void gasUnitInDollarsIsInitializedOkAtConstructor() {
         Block block1 = mock(Block.class);
         when(block1.getFeesPaidToMiner()).thenReturn(new Coin(BigInteger.valueOf(10)));
-        when(block1.getHashForMergedMining()).thenReturn(TestUtils.randomHash().getBytes());
-        when(block1.getHash()).thenReturn(TestUtils.randomHash());
+        when(block1.getHashForMergedMining()).thenReturn(TestUtils.randomHash("block1MM").getBytes());
+        when(block1.getHash()).thenReturn(TestUtils.randomHash("block1Hash"));
         when(block1.getDifficulty()).thenReturn(BlockDifficulty.ZERO);
-        when(block1.getParentHashJsonString()).thenReturn(TestUtils.randomHash().toJsonString());
+        when(block1.getParentHashJsonString()).thenReturn(TestUtils.randomHash("block1Parent").toJsonString());
 
         Block block2 = mock(Block.class);
         when(block2.getFeesPaidToMiner()).thenReturn(new Coin(BigInteger.valueOf(24)));
-        when(block2.getHashForMergedMining()).thenReturn(TestUtils.randomHash().getBytes());
-        when(block2.getHash()).thenReturn(TestUtils.randomHash());
+        when(block2.getHashForMergedMining()).thenReturn(TestUtils.randomHash("block2MM").getBytes());
+        when(block2.getHash()).thenReturn(TestUtils.randomHash("bock2Hash"));
         when(block2.getDifficulty()).thenReturn(BlockDifficulty.ZERO);
-        when(block2.getParentHashJsonString()).thenReturn(TestUtils.randomHash().toJsonString());
+        when(block2.getParentHashJsonString()).thenReturn(TestUtils.randomHash("block2Parent").toJsonString());
 
         BlockToMineBuilder builder = mock(BlockToMineBuilder.class);
         BlockResult blockResult = mock(BlockResult.class);
@@ -751,7 +745,7 @@ public abstract class MinerServerTest {
     void onNewTxBuildBlockToMine() throws InterruptedException {
 
         // prepare for miner server
-        Ethereum ethereum = spy(new EthereumImpl(null, null, compositeEthereumListener, standardBlockchain, Mockito.mock(GasPriceTracker.class)) );
+        Ethereum ethereum = spy(new EthereumImpl(null, null, compositeEthereumListener, standardBlockchain, mock(GasPriceTracker.class)) );
         doReturn(ImportResult.IMPORTED_BEST).when(ethereum).addNewMinedBlock(any());
 
         BlockUnclesValidationRule unclesValidationRule = mock(BlockUnclesValidationRule.class);

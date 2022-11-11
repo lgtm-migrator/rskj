@@ -18,19 +18,18 @@
 
 package co.rsk.rpc.modules.eth;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyByte;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
+import co.rsk.config.BridgeConstants;
+import co.rsk.config.TestSystemProperties;
+import co.rsk.core.ReversibleTransactionExecutor;
+import co.rsk.core.RskAddress;
+import co.rsk.core.Wallet;
+import co.rsk.core.bc.BlockResult;
+import co.rsk.core.bc.PendingState;
+import co.rsk.db.RepositoryLocator;
+import co.rsk.net.TransactionGateway;
+import co.rsk.peg.BridgeSupportFactory;
+import co.rsk.rpc.ExecutionBlockRetriever;
+import co.rsk.util.HexUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.ethereum.TestUtils;
 import org.ethereum.config.Constants;
@@ -47,26 +46,24 @@ import org.ethereum.util.TransactionFactoryHelper;
 import org.ethereum.vm.program.ProgramResult;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import co.rsk.config.BridgeConstants;
-import co.rsk.config.TestSystemProperties;
-import co.rsk.core.ReversibleTransactionExecutor;
-import co.rsk.core.RskAddress;
-import co.rsk.core.Wallet;
-import co.rsk.core.bc.BlockResult;
-import co.rsk.core.bc.PendingState;
-import co.rsk.db.RepositoryLocator;
-import co.rsk.net.TransactionGateway;
-import co.rsk.peg.BridgeSupportFactory;
-import co.rsk.rpc.ExecutionBlockRetriever;
-import co.rsk.util.HexUtils;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyByte;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class EthModuleTest {
 
     private TestSystemProperties config = new TestSystemProperties();
-    private String anyAddress = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
     @Test
     void callSmokeTest() {
@@ -276,7 +273,7 @@ class EthModuleTest {
                 config.getGasEstimationCap()
         );
 
-        String addr = eth.getCode(TestUtils.randomAddress().toHexString(), "pending");
+        String addr = eth.getCode(TestUtils.randomAddress("addr").toHexString(), "pending");
         MatcherAssert.assertThat(Hex.decode(addr.substring("0x".length())), is(expectedCode));
     }
 

@@ -24,7 +24,6 @@ import org.ethereum.core.Account;
 import org.ethereum.core.ImmutableTransaction;
 import org.ethereum.core.Transaction;
 import org.ethereum.crypto.ECKey;
-import org.ethereum.crypto.Keccak256Helper;
 import org.ethereum.util.ByteUtil;
 
 import java.math.BigInteger;
@@ -129,7 +128,11 @@ public class TransactionBuilder {
      * Generates a random transaction
      * */
     public Transaction buildRandomTransaction() {
-        int i = new Random().nextInt();
+       return buildRandomTransaction(TransactionBuilder.class.hashCode());
+    }
+
+    public Transaction buildRandomTransaction(long seed) {
+        int i = new Random(seed).nextInt();
         BigInteger randomPositiveVal = i > 0 ?  BigInteger.valueOf(i) : BigInteger.valueOf(i * -1);
 
         Account receiver = new AccountBuilder().name("account" + randomPositiveVal).build();

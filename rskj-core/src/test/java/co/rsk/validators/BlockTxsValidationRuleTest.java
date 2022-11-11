@@ -57,7 +57,7 @@ class BlockTxsValidationRuleTest {
 
     @Test
     void validNonceSame() {
-        RskAddress sender = TestUtils.randomAddress();
+        RskAddress sender = TestUtils.randomAddress("sender");
         initialNonce(sender, 42);
 
         Block block = block(transaction(sender, 42));
@@ -67,7 +67,7 @@ class BlockTxsValidationRuleTest {
 
     @Test
     void invalidNonceLower() {
-        RskAddress sender = TestUtils.randomAddress();
+        RskAddress sender = TestUtils.randomAddress("sender");
         initialNonce(sender, 42);
 
         Block block = block(transaction(sender, 41));
@@ -77,7 +77,7 @@ class BlockTxsValidationRuleTest {
 
     @Test
     void invalidNonceHigher() {
-        RskAddress sender = TestUtils.randomAddress();
+        RskAddress sender = TestUtils.randomAddress("sender");
         initialNonce(sender, 42);
 
         Block block = block(transaction(sender, 43));
@@ -87,9 +87,9 @@ class BlockTxsValidationRuleTest {
 
     @Test
     void validTransactionsWithSameNonceAndDifferentSenders() {
-        RskAddress sender1 = TestUtils.randomAddress();
+        RskAddress sender1 = TestUtils.randomAddress("sender1");
         initialNonce(sender1, 64);
-        RskAddress sender2 = TestUtils.randomAddress();
+        RskAddress sender2 = TestUtils.randomAddress("sender2");
         initialNonce(sender2, 64);
 
         Block block = block(transaction(sender1, 64), transaction(sender2, 64));
@@ -99,7 +99,7 @@ class BlockTxsValidationRuleTest {
 
     @Test
     void validConsecutiveTransactionsFromSameSender() {
-        RskAddress sender = TestUtils.randomAddress();
+        RskAddress sender = TestUtils.randomAddress("sender");
         initialNonce(sender, 42);
 
         Block block = block(transaction(sender, 42), transaction(sender, 43));
@@ -109,7 +109,7 @@ class BlockTxsValidationRuleTest {
 
     @Test
     void invalidTransactionsFromSameSenderWithSkippedNonce() {
-        RskAddress sender = TestUtils.randomAddress();
+        RskAddress sender = TestUtils.randomAddress("sender");
         initialNonce(sender, 42);
 
         Block block = block(transaction(sender, 42), transaction(sender, 44));
@@ -119,7 +119,7 @@ class BlockTxsValidationRuleTest {
 
     @Test
     void invalidTransactionsWithSameNonceAndSameSender() {
-        RskAddress sender = TestUtils.randomAddress();
+        RskAddress sender = TestUtils.randomAddress("sender");
         initialNonce(sender, 42);
 
         Block block = block(transaction(sender, 42), transaction(sender, 42));
