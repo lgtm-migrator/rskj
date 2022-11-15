@@ -32,6 +32,7 @@ import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.signers.ECDSASigner;
 import org.bouncycastle.util.encoders.Hex;
+import org.ethereum.TestUtils;
 import org.ethereum.config.Constants;
 import org.ethereum.config.blockchain.upgrades.ActivationConfig;
 import org.ethereum.config.blockchain.upgrades.ActivationConfigsForTest;
@@ -62,14 +63,17 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static co.rsk.peg.PegTestUtils.*;
+import static co.rsk.peg.PegTestUtils.createBaseInputScriptThatSpendsFromTheFederation;
+import static co.rsk.peg.PegTestUtils.createBaseRedeemScriptThatSpendsFromTheFederation;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
@@ -7015,7 +7019,7 @@ class BridgeSupportTest extends BridgeSupportTestBase {
         // Configure existing utxos in both federations
         if (amountInOldFed != null) {
             UTXO utxo = new UTXO(
-                Sha256Hash.wrap(HashUtil.randomHash()),
+                Sha256Hash.wrap(TestUtils.generateBytes("amountInOldFed",32)),
                 0,
                 amountInOldFed,
                 1,
@@ -7027,7 +7031,7 @@ class BridgeSupportTest extends BridgeSupportTestBase {
         }
         if (amountInNewFed != null) {
             UTXO utxo = new UTXO(
-                Sha256Hash.wrap(HashUtil.randomHash()),
+                Sha256Hash.wrap(TestUtils.generateBytes("amountInNewFed",32)),
                 0,
                 amountInNewFed,
                 1,
