@@ -105,6 +105,7 @@ class ActivationConfigTest {
             "    rskip297: hop400",
             "    rskip353: hop401",
             "    rskip357: hop401",
+            "    rskip326: fingerroot500",
             "}"
     ));
 

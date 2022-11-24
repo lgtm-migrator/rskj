@@ -71,7 +71,7 @@ public class BridgeSupportFactory {
             eventLogger = null;
         } else {
             if (activations.isActive(ConsensusRule.RSKIP146)) {
-                eventLogger = new BridgeEventLoggerImpl(bridgeConstants, logs);
+                eventLogger = new BridgeEventLoggerImpl(bridgeConstants, activations, logs);
             } else {
                 eventLogger = new BrigeEventLoggerLegacyImpl(bridgeConstants, activations, logs);
             }
