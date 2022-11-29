@@ -1979,7 +1979,7 @@ public class RskContext implements NodeContext, NodeBootstrapper {
                     new CorsConfiguration(rskSystemProperties.corsDomains()),
                     getJsonRpcWeb3FilterHandler(),
                     getJsonRpcWeb3ServerHandler(),
-                    rskSystemProperties.getMaxPayloadSize()
+                    rskSystemProperties.rpcHttpMaxAggregatedFrameSize()
             );
         }
 
