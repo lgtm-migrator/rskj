@@ -88,7 +88,7 @@ class CliToolsTest {
         WorldDslProcessor processor = new WorldDslProcessor(world);
         processor.processCommands(parser);
 
-        File blocksFile = tempDir.resolve( "blocks.txt").toFile();
+        File blocksFile = tempDir.resolve("blocks.txt").toFile();
         String[] args = new String[]{"0", "2", blocksFile.getAbsolutePath()};
 
         RskContext rskContext = mock(RskContext.class);
@@ -345,12 +345,12 @@ class CliToolsTest {
         stringBuilder.append(ByteUtil.toHexString(value));
         stringBuilder.append("\n");
 
-        File stateFile = tempDir.resolve( "state.txt").toFile();
+        File stateFile = tempDir.resolve("state.txt").toFile();
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(stateFile))) {
             writer.write(stringBuilder.toString());
         }
 
-        String databaseDir = tempDir.resolve( "db").toAbsolutePath().toString();
+        String databaseDir = tempDir.resolve("db").toAbsolutePath().toString();
         String[] args = new String[]{stateFile.getAbsolutePath()};
 
         RskContext rskContext = mock(RskContext.class);
@@ -358,13 +358,14 @@ class CliToolsTest {
         doReturn(databaseDir).when(rskSystemProperties).databaseDir();
         doReturn(rskSystemProperties).when(rskContext).getRskSystemProperties();
         doReturn(DbKind.LEVEL_DB).when(rskSystemProperties).databaseKind();
+        doReturn(DbKind.LEVEL_DB).when(rskSystemProperties).getStatesDataSource();
         NodeStopper stopper = mock(NodeStopper.class);
 
         ImportState importStateCliTool = new ImportState();
         importStateCliTool.execute(args, () -> rskContext, stopper);
 
         byte[] key = new Keccak256(Keccak256Helper.keccak256(value)).getBytes();
-        KeyValueDataSource trieDB = KeyValueDataSource.makeDataSource(Paths.get(databaseDir, "unitrie"), rskSystemProperties.databaseKind());
+        KeyValueDataSource trieDB = KeyValueDataSource.makeDataSource(Paths.get(databaseDir, "unitrie"), rskSystemProperties.getStatesDataSource(), rskSystemProperties.databaseKind());
         byte[] result = trieDB.get(key);
         trieDB.close();
 
@@ -481,7 +482,7 @@ class CliToolsTest {
 
     @Test
     void dbMigrate() throws IOException {
-        File nodeIdPropsFile = tempDir.resolve( "nodeId.properties").toFile();
+        File nodeIdPropsFile = tempDir.resolve("nodeId.properties").toFile();
         File dbKindPropsFile = tempDir.resolve(KeyValueDataSource.DB_KIND_PROPERTIES_FILE).toFile();
 
         if (nodeIdPropsFile.createNewFile()) {
@@ -678,7 +679,7 @@ class CliToolsTest {
 
         ClassLoader classLoader = this.getClass().getClassLoader();
         File workDir = new File(classLoader.getResource("doc/rpc").getFile());
-        File destFile = tempDir.resolve( "generated_openrpc.json").toFile();
+        File destFile = tempDir.resolve("generated_openrpc.json").toFile();
 
         GenerateOpenRpcDoc generateOpenRpcDocCliTool = new GenerateOpenRpcDoc();
 
