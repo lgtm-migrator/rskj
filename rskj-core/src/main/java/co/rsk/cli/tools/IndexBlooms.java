@@ -18,6 +18,7 @@
 package co.rsk.cli.tools;
 
 import co.rsk.RskContext;
+import co.rsk.cli.CliToolRskContextAware;
 import co.rsk.logfilter.BlocksBloom;
 import co.rsk.logfilter.BlocksBloomStore;
 import org.ethereum.core.Block;
@@ -27,12 +28,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import java.lang.invoke.MethodHandles;
 
 /**
  * The entry point for indexing block blooms
  * This is an experimental/unsupported tool
  */
-public class IndexBlooms {
+public class IndexBlooms extends CliToolRskContextAware {
 
     private static final Logger logger = LoggerFactory.getLogger(IndexBlooms.class);
 
@@ -40,12 +42,15 @@ public class IndexBlooms {
     private static final String LATEST = "latest";
 
     public static void main(String[] args) {
-        try (RskContext ctx = new RskContext(args)) {
+        create(MethodHandles.lookup().lookupClass()).execute(args);
+    }
+
+    @Override
+    protected void onExecute(@Nonnull String[] args, @Nonnull RskContext ctx) throws Exception {
             BlockStore blockStore = ctx.getBlockStore();
             BlocksBloomStore blocksBloomStore = ctx.getBlocksBloomStore();
 
             execute(makeBlockRange(args, blockStore), blockStore, blocksBloomStore);
-        }
     }
 
     /**
