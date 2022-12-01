@@ -2080,6 +2080,7 @@ class Web3ImplTest {
         BigInteger gasLimit = BigInteger.valueOf(9);
         String data = "0xff";
         BigInteger nonce = BigInteger.ONE;
+        byte chainId = config.getNetworkConstants().getChainId();
 
         // ***** Executes the transaction *******************
         CallArguments args = new CallArguments();
@@ -2090,6 +2091,7 @@ class Web3ImplTest {
         args.setGasPrice(HexUtils.toQuantityJsonHex(gasPrice));
         args.setValue(value.toString());
         args.setNonce(nonce.toString());
+        args.setChainId(HexUtils.toJsonHex(new byte[]{chainId}));
 
         String txHash = null;
         try {

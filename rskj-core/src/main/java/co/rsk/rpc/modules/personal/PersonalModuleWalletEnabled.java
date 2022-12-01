@@ -23,12 +23,14 @@ import static org.ethereum.rpc.exception.RskJsonRpcRequestException.invalidParam
 import java.util.Arrays;
 
 import org.bouncycastle.util.encoders.Hex;
+import org.ethereum.config.Constants;
 import org.ethereum.core.Account;
 import org.ethereum.core.Transaction;
 import org.ethereum.core.TransactionArguments;
 import org.ethereum.core.TransactionPool;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.rpc.CallArguments;
+import org.ethereum.rpc.exception.RskJsonRpcRequestException;
 import org.ethereum.util.ByteUtil;
 import org.ethereum.util.TransactionArgumentsUtil;
 import org.slf4j.Logger;
@@ -48,12 +50,14 @@ public class PersonalModuleWalletEnabled implements PersonalModule {
     private final Wallet wallet;
     private final TransactionPool transactionPool;
     private final RskSystemProperties config;
+    private final Constants constants;
 
     public PersonalModuleWalletEnabled(RskSystemProperties config, Ethereum eth, Wallet wallet, TransactionPool transactionPool) {
         this.config = config;
         this.eth = eth;
         this.wallet = wallet;
         this.transactionPool = transactionPool;
+        this.constants = config.getNetworkConstants();
     }
 
     @Override
@@ -198,6 +202,10 @@ public class PersonalModuleWalletEnabled implements PersonalModule {
 		Transaction tx = Transaction.builder().withTransactionArguments(txArgs).build();
 
 		tx.sign(senderAccount.getEcKey().getPrivKeyBytes());
+
+        if (!tx.acceptTransactionSignature(constants.getChainId())) {
+            throw RskJsonRpcRequestException.invalidParamError(TransactionArgumentsUtil.ERR_INVALID_CHAIN_ID + tx.getChainId());
+        }
 
 		eth.submitTransaction(tx);
 
