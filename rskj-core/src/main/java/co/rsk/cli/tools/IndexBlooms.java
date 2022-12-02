@@ -47,10 +47,10 @@ public class IndexBlooms extends CliToolRskContextAware {
 
     @Override
     protected void onExecute(@Nonnull String[] args, @Nonnull RskContext ctx) throws Exception {
-            BlockStore blockStore = ctx.getBlockStore();
-            BlocksBloomStore blocksBloomStore = ctx.getBlocksBloomStore();
+        BlockStore blockStore = ctx.getBlockStore();
+        BlocksBloomStore blocksBloomStore = ctx.getBlocksBloomStore();
 
-            execute(makeBlockRange(args, blockStore), blockStore, blocksBloomStore);
+        execute(makeBlockRange(args, blockStore), blockStore, blocksBloomStore);
     }
 
     /**
