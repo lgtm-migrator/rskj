@@ -145,7 +145,7 @@ public class PersonalModuleWalletEnabled implements PersonalModule {
         try {
             return s = sendTransaction(args, getAccount(args.getFrom(), passphrase));
         } finally {
-            LOGGER.debug("eth_sendTransaction({}): {}", args,  s);
+            LOGGER.debug("eth_sendTransaction({}): {}", args, s);
         }
     }
 
@@ -191,26 +191,26 @@ public class PersonalModuleWalletEnabled implements PersonalModule {
         return wallet.getAccount(new RskAddress(from), passphrase);
     }
 
-	private String sendTransaction(CallArguments args, Account senderAccount) throws Exception {
+    private String sendTransaction(CallArguments args, Account senderAccount) throws Exception {
 
-		if (senderAccount == null) {
-			throw new Exception("From address private key could not be found in this node");
-		}
+        if (senderAccount == null) {
+            throw new Exception("From address private key could not be found in this node");
+        }
 
-		TransactionArguments txArgs = TransactionArgumentsUtil.processArguments(args, transactionPool, senderAccount, config.getNetworkConstants().getChainId());
+        TransactionArguments txArgs = TransactionArgumentsUtil.processArguments(args, transactionPool, senderAccount, config.getNetworkConstants().getChainId());
 
-		Transaction tx = Transaction.builder().withTransactionArguments(txArgs).build();
+        Transaction tx = Transaction.builder().withTransactionArguments(txArgs).build();
 
-		tx.sign(senderAccount.getEcKey().getPrivKeyBytes());
+        tx.sign(senderAccount.getEcKey().getPrivKeyBytes());
 
         if (!tx.acceptTransactionSignature(constants.getChainId())) {
             throw RskJsonRpcRequestException.invalidParamError(TransactionArgumentsUtil.ERR_INVALID_CHAIN_ID + tx.getChainId());
         }
 
-		eth.submitTransaction(tx);
+        eth.submitTransaction(tx);
 
-		return tx.getHash().toJsonString();
-	}
+        return tx.getHash().toJsonString();
+    }
 
     private String convertFromJsonHexToHex(String x) throws Exception {
         if (!x.startsWith("0x")) {
